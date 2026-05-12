@@ -8,10 +8,27 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Laravel\Cashier\Billable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, Billable;
+
+    /**
+     * Get the plan limits based on subscription.
+     */
+    public function getPlanLimitsAttribute()
+    {
+        if ($this->subscribed('business')) {
+            return ['events' => -1, 'members' => -1, 'premium' => true];
+        }
+
+        if ($this->subscribed('pro')) {
+            return ['events' => 10, 'members' => -1, 'premium' => true];
+        }
+
+        return ['events' => 1, 'members' => 5, 'premium' => false];
+    }
 
     /**
      * Get the events for the user.

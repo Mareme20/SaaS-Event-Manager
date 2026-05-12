@@ -52,6 +52,20 @@ class EventController extends Controller
     }
 
     /**
+     * Display the calendar view for events.
+     */
+    public function calendar(Request $request)
+    {
+        $events = $request->user()->events()
+            ->select(['id', 'title', 'date', 'location', 'slug'])
+            ->get();
+
+        return Inertia::render('Events/Calendar', [
+            'events' => $events
+        ]);
+    }
+
+    /**
      * @OA\Get(
      *      path="/api/events",
      *      operationId="getEventsList",
@@ -124,6 +138,10 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
+        if (\Illuminate\Support\Facades\Gate::denies('create-event')) {
+            return redirect()->back()->with('error', 'Vous avez atteint la limite d\'événements pour votre forfait actuel. Veuillez passer à un forfait supérieur.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

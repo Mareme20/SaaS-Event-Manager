@@ -1,0 +1,5 @@
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacks]
+plan = { variables = { "RAILPACK_PHP_VERSION" = "8.3" } }

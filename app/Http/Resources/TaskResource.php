@@ -21,6 +21,14 @@ class TaskResource extends JsonResource
             'due_date' => $this->due_date,
             'priority' => $this->priority,
             'status' => $this->status,
+            'comments_count' => $this->comments()->count(),
+            'comments' => $this->comments()->with('user')->latest()->get()->map(fn($c) => [
+                'id' => $c->id,
+                'content' => $c->content,
+                'user_name' => $c->user->name,
+                'user_id' => $c->user_id,
+                'created_at' => $c->created_at->diffForHumans(),
+            ]),
             'created_at' => $this->created_at,
         ];
     }

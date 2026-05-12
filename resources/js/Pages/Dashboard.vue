@@ -1,6 +1,19 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { Bar, Doughnut } from 'vue-chartjs';
+import { 
+    Chart as ChartJS, 
+    Title, 
+    Tooltip, 
+    Legend, 
+    BarElement, 
+    CategoryScale, 
+    LinearScale, 
+    ArcElement 
+} from 'chart.js';
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement);
 
 const props = defineProps({
     stats: Object,
@@ -31,6 +44,65 @@ const getWelcomeMessage = () => {
     if (hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
 };
+
+// Données pour le graphique Budget
+const budgetChartData = {
+    labels: ['Budget Estimé', 'Budget Réel'],
+    datasets: [
+        {
+            label: 'Montant (FCFA)',
+            backgroundColor: ['#d946ef', '#f59e0b'],
+            data: [props.stats.total_budget, props.stats.total_spent]
+        }
+    ]
+};
+
+const budgetChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            display: false
+        }
+    },
+    scales: {
+        y: {
+            beginAtZero: true,
+            ticks: {
+                callback: (value) => value.toLocaleString()
+            }
+        }
+    }
+};
+
+// Données pour le graphique Cotisations
+const contributionChartData = {
+    labels: ['Collecté', 'Restant'],
+    datasets: [
+        {
+            backgroundColor: ['#10b981', '#f1f5f9'],
+            data: [
+                props.stats.total_contributions, 
+                Math.max(0, props.stats.total_budget - props.stats.total_contributions)
+            ]
+        }
+    ]
+};
+
+const contributionChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+        legend: {
+            position: 'bottom',
+            labels: {
+                usePointStyle: true,
+                padding: 20
+            }
+        }
+    }
+};
 </script>
 
 <template>
@@ -43,21 +115,21 @@ const getWelcomeMessage = () => {
                 <div>
                     <div class="flex items-center gap-3 mb-2">
                         <span class="text-3xl">🎉</span>
-                        <h1 class="text-3xl font-black text-slate-800 tracking-tight">
+                        <h1 class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">
                             {{ getWelcomeMessage() }}, {{ $page.props.auth.user.name }} !
                         </h1>
                     </div>
-                    <p class="text-slate-500 font-medium flex items-center gap-2">
+                    <p class="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
                         <span class="w-2 h-2 bg-fuchsia-500 rounded-full animate-pulse"></span>
                         Voici l'aperçu de vos célébrations
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span class="px-4 py-2 text-xs font-black bg-gradient-to-r from-fuchsia-50 to-amber-50 text-fuchsia-700 rounded-full border border-fuchsia-200 shadow-sm">
+                    <span class="px-4 py-2 text-xs font-black bg-gradient-to-r from-fuchsia-50 to-amber-50 dark:from-slate-800 dark:to-slate-900 text-fuchsia-700 dark:text-fuchsia-400 rounded-full border border-fuchsia-200 dark:border-slate-700 shadow-sm">
                         📅 {{ new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) }}
                     </span>
                     <Link :href="route('events.create')" 
-                          class="px-5 py-2.5 bg-gradient-to-r from-fuchsia-600 to-amber-500 text-white rounded-full text-sm font-black hover:from-fuchsia-700 hover:to-amber-600 shadow-lg shadow-fuchsia-200 transition-all flex items-center gap-2">
+                          class="px-5 py-2.5 bg-gradient-to-r from-fuchsia-600 to-amber-500 text-white rounded-full text-sm font-black hover:from-fuchsia-700 hover:to-amber-600 shadow-lg shadow-fuchsia-200 dark:shadow-none transition-all flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Nouvelle fête
                     </Link>
@@ -90,11 +162,11 @@ const getWelcomeMessage = () => {
                 </div>
 
                 <!-- Budget consommé -->
-                <div class="bg-white rounded-2xl shadow-sm border border-amber-100 p-6 hover:shadow-lg transition-shadow">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-amber-100 dark:border-slate-800 p-6 hover:shadow-lg transition-all">
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
-                            <p class="text-sm font-medium text-slate-500 mb-1">Budget consommé</p>
-                            <p class="text-3xl font-black text-slate-800">{{ formatCurrency(stats.total_spent) }}</p>
+                            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Budget consommé</p>
+                            <p class="text-3xl font-black text-slate-800 dark:text-white">{{ formatCurrency(stats.total_spent) }}</p>
                             <div class="mt-4">
                                 <div class="flex items-center justify-between text-xs mb-1.5">
                                     <span class="text-slate-400 font-medium">Progression</span>
@@ -102,18 +174,18 @@ const getWelcomeMessage = () => {
                                         'text-emerald-600': (stats.total_spent / stats.total_budget) * 100 < 50,
                                         'text-amber-600': (stats.total_spent / stats.total_budget) * 100 >= 50 && (stats.total_spent / stats.total_budget) * 100 < 80,
                                         'text-rose-600': (stats.total_spent / stats.total_budget) * 100 >= 80
-                                    }">{{ Math.round((stats.total_spent / stats.total_budget) * 100) }}%</span>
+                                    }">{{ stats.total_budget > 0 ? Math.round((stats.total_spent / stats.total_budget) * 100) : 0 }}%</span>
                                 </div>
-                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
                                     <div 
                                         class="h-2.5 rounded-full transition-all duration-700"
-                                        :class="getProgressColor((stats.total_spent / stats.total_budget) * 100)"
-                                        :style="{ width: Math.min((stats.total_spent / stats.total_budget) * 100, 100) + '%' }"
+                                        :class="getProgressColor(stats.total_budget > 0 ? (stats.total_spent / stats.total_budget) * 100 : 0)"
+                                        :style="{ width: Math.min(stats.total_budget > 0 ? (stats.total_spent / stats.total_budget) * 100 : 0, 100) + '%' }"
                                     ></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="p-3 bg-emerald-50 rounded-xl">
+                        <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
                             <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2zM14 20h2a2 2 0 002-2V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v15a2 2 0 002 2z"/>
                             </svg>
@@ -122,11 +194,11 @@ const getWelcomeMessage = () => {
                 </div>
 
                 <!-- Total événements -->
-                <div class="bg-white rounded-2xl shadow-sm border border-amber-100 p-6 hover:shadow-lg transition-shadow">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-amber-100 dark:border-slate-800 p-6 hover:shadow-lg transition-all">
                     <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-sm font-medium text-slate-500 mb-1">Événements</p>
-                            <p class="text-3xl font-black text-slate-800">{{ stats.total_events }}</p>
+                            <p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Événements</p>
+                            <p class="text-3xl font-black text-slate-800 dark:text-white">{{ stats.total_events }}</p>
                             <p class="text-xs text-slate-400 mt-2">
                                 <span v-if="stats.upcoming && stats.upcoming.length > 0">
                                     {{ stats.upcoming.length }} à venir
@@ -141,7 +213,7 @@ const getWelcomeMessage = () => {
                                 </svg>
                             </Link>
                         </div>
-                        <div class="p-3 bg-fuchsia-50 rounded-xl">
+                        <div class="p-3 bg-fuchsia-50 dark:bg-fuchsia-900/20 rounded-xl">
                             <svg class="w-6 h-6 text-fuchsia-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -150,14 +222,34 @@ const getWelcomeMessage = () => {
                 </div>
             </div>
 
+            <!-- Section Graphiques -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-amber-100 dark:border-slate-800 p-6">
+                    <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                        <span>📊</span> Analyse du Budget
+                    </h3>
+                    <div class="h-64">
+                        <Bar :data="budgetChartData" :options="budgetChartOptions" />
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-amber-100 dark:border-slate-800 p-6">
+                    <h3 class="text-lg font-black text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                        <span>💰</span> État des Cotisations
+                    </h3>
+                    <div class="h-64">
+                        <Doughnut :data="contributionChartData" :options="contributionChartOptions" />
+                    </div>
+                </div>
+            </div>
+
             <!-- Section principale -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 
                 <!-- Prochains événements -->
-                <div class="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-amber-100 bg-gradient-to-r from-fuchsia-50/30 to-amber-50/30">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-amber-100 dark:border-slate-800 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-amber-100 dark:border-slate-800 bg-gradient-to-r from-fuchsia-50/30 to-amber-50/30 dark:from-slate-800 dark:to-slate-900">
                         <div class="flex justify-between items-center">
-                            <h3 class="font-black text-slate-800 flex items-center gap-2">
+                            <h3 class="font-black text-slate-800 dark:text-white flex items-center gap-2">
                                 <span>📅</span> Prochains événements
                             </h3>
                             <Link :href="route('events.index')" 
@@ -167,26 +259,26 @@ const getWelcomeMessage = () => {
                         </div>
                     </div>
                     
-                    <div class="divide-y divide-amber-50">
+                    <div class="divide-y divide-amber-50 dark:divide-slate-800">
                         <div v-if="stats.upcoming && stats.upcoming.length > 0">
                             <Link 
                                 v-for="event in stats.upcoming.slice(0, 5)" 
                                 :key="event.id" 
                                 :href="route('events.show', event.id)"
-                                class="block p-5 hover:bg-amber-50/30 transition-colors group"
+                                class="block p-5 hover:bg-amber-50/30 dark:hover:bg-slate-800/50 transition-colors group"
                             >
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center space-x-4">
-                                        <div class="w-14 h-14 bg-gradient-to-br from-fuchsia-100 to-amber-100 rounded-xl flex flex-col items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
-                                            <span class="text-xs font-black text-fuchsia-600 uppercase">
+                                        <div class="w-14 h-14 bg-gradient-to-br from-fuchsia-100 to-amber-100 dark:from-fuchsia-900/30 dark:to-amber-900/30 rounded-xl flex flex-col items-center justify-center group-hover:scale-105 transition-transform shadow-sm">
+                                            <span class="text-xs font-black text-fuchsia-600 dark:text-fuchsia-400 uppercase">
                                                 {{ new Date(event.date).toLocaleDateString('fr-FR', { month: 'short' }) }}
                                             </span>
-                                            <span class="text-xl font-black text-fuchsia-700 leading-none">
+                                            <span class="text-xl font-black text-fuchsia-700 dark:text-fuchsia-300 leading-none">
                                                 {{ new Date(event.date).getDate() }}
                                             </span>
                                         </div>
                                         <div>
-                                            <h4 class="font-bold text-slate-800 group-hover:text-fuchsia-600 transition-colors">{{ event.title }}</h4>
+                                            <h4 class="font-bold text-slate-800 dark:text-white group-hover:text-fuchsia-600 transition-colors">{{ event.title }}</h4>
                                             <p class="text-sm text-slate-400 flex items-center gap-1 mt-1">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                                 {{ event.location }}
@@ -201,10 +293,10 @@ const getWelcomeMessage = () => {
                         </div>
                         
                         <div v-else class="p-8 text-center">
-                            <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-8 h-8 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <div class="w-16 h-16 bg-amber-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-amber-300 dark:text-amber-500/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </div>
-                            <p class="text-slate-500 font-medium">Aucun événement à venir</p>
+                            <p class="text-slate-500 dark:text-slate-400 font-medium">Aucun événement à venir</p>
                             <Link :href="route('events.create')" 
                                   class="inline-flex items-center text-sm font-bold text-fuchsia-600 hover:text-amber-600 mt-3 transition-colors">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,15 +380,15 @@ const getWelcomeMessage = () => {
 
             <!-- Événements récents -->
             <div v-if="stats.recent_events && stats.recent_events.length > 0" class="mt-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-amber-100 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-amber-100 bg-gradient-to-r from-fuchsia-50/30 to-amber-50/30">
-                        <h3 class="font-black text-slate-800 flex items-center gap-2">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-amber-100 dark:border-slate-800 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-amber-100 dark:border-slate-800 bg-gradient-to-r from-fuchsia-50/30 to-amber-50/30 dark:from-slate-800 dark:to-slate-900">
+                        <h3 class="font-black text-slate-800 dark:text-white flex items-center gap-2">
                             <span>📋</span> Événements récents
                         </h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full">
-                            <thead class="bg-amber-50/30 border-b border-amber-100">
+                            <thead class="bg-amber-50/30 dark:bg-slate-800 border-b border-amber-100 dark:border-slate-800">
                                 <tr>
                                     <th class="text-left px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-wider">Événement</th>
                                     <th class="text-left px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-wider">Date</th>
@@ -304,17 +396,17 @@ const getWelcomeMessage = () => {
                                     <th class="text-left px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-wider">Budget</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-amber-50">
-                                <tr v-for="event in stats.recent_events.slice(0, 5)" :key="event.id" class="hover:bg-amber-50/20 transition-colors">
+                            <tbody class="divide-y divide-amber-50 dark:divide-slate-800">
+                                <tr v-for="event in stats.recent_events.slice(0, 5)" :key="event.id" class="hover:bg-amber-50/20 dark:hover:bg-slate-800/50 transition-colors">
                                     <td class="px-6 py-4">
                                         <Link :href="route('events.show', event.id)" 
-                                              class="font-bold text-slate-800 hover:text-fuchsia-600 transition-colors">
+                                              class="font-bold text-slate-800 dark:text-white hover:text-fuchsia-600 transition-colors">
                                             {{ event.title }}
                                         </Link>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(event.date) }}</td>
-                                    <td class="px-6 py-4 text-sm text-slate-500">{{ event.location }}</td>
-                                    <td class="px-6 py-4 text-sm font-bold text-slate-700">{{ formatCurrency(event.budget) }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ formatDate(event.date) }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">{{ event.location }}</td>
+                                    <td class="px-6 py-4 text-sm font-bold text-slate-700 dark:text-slate-300">{{ formatCurrency(event.budget) }}</td>
                                 </tr>
                             </tbody>
                         </table>

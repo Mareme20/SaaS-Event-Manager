@@ -33,6 +33,9 @@ const formatDate = (date) => {
                 </div>
                 
                 <div class="flex items-center space-x-6">
+                    <Link :href="route('pricing')" class="text-sm font-bold text-slate-600 hover:text-fuchsia-700 transition">
+                        Tarification
+                    </Link>
                     <div v-if="canLogin">
                         <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="text-sm font-bold text-slate-700 bg-amber-100/80 px-6 py-2.5 rounded-full hover:bg-amber-200 transition border border-amber-200/50">
                             Tableau de bord

@@ -26,6 +26,10 @@ class MemberController extends Controller
      */
     public function store(Request $request)
     {
+        if (\Illuminate\Support\Facades\Gate::denies('add-member')) {
+            return redirect()->back()->with('error', 'Vous avez atteint la limite de membres pour votre forfait actuel. Veuillez passer à un forfait supérieur.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',

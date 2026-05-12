@@ -41,7 +41,10 @@ class TaskController extends Controller
             'status' => 'required|in:todo,doing,done',
         ]);
 
-        $event->tasks()->create($validated);
+        $task = $event->tasks()->create($validated);
+
+        // Notify the user (organizer) for now as members don't have user accounts yet
+        auth()->user()->notify(new \App\Notifications\TaskAssignedNotification($task));
 
         return redirect()->back()->with('success', 'Tâche ajoutée');
     }
@@ -51,6 +54,8 @@ class TaskController extends Controller
      */
     public function update(Request $request, Task $task)
     {
+        $oldMemberId = $task->member_id;
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'member_id' => 'nullable|exists:members,id',
@@ -61,6 +66,10 @@ class TaskController extends Controller
         ]);
 
         $task->update($validated);
+
+        if ($task->member_id && $task->member_id != $oldMemberId) {
+            auth()->user()->notify(new \App\Notifications\TaskAssignedNotification($task));
+        }
 
         return redirect()->back()->with('success', 'Tâche mise à jour');
     }

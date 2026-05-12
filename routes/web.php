@@ -34,6 +34,10 @@ Route::get('/', function () {
     ]);
 })->name('welcome');
 
+Route::get('/pricing', function () {
+    return Inertia::render('Pricing');
+})->name('pricing');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function (Request $request) {
         $events = $request->user()->events()->with(['expenses', 'contributions'])->get();
@@ -52,10 +56,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     // Routes Événements
+    Route::get('events/calendar', [EventController::class, 'calendar'])->name('events.calendar')->middleware('subscribed');
     Route::resource('events', EventController::class);
     Route::get('events/{event}/qrcode', [EventController::class, 'qrCode'])->name('events.qrcode');
     Route::get('events/{event}/report', [EventController::class, 'exportPdf'])->name('events.report');
-    Route::get('events/{event}/analytics', [EventController::class, 'reports'])->name('events.analytics');
+    Route::get('events/{event}/analytics', [EventController::class, 'reports'])->name('events.analytics')->middleware('subscribed');
     Route::get('events/{event}/export-csv', [EventController::class, 'exportCsv'])->name('events.export-csv');
 
     // Routes Membres
@@ -84,9 +89,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('events/{event}/checkout', [PaymentController::class, 'checkout'])->name('payments.checkout');
     Route::get('payments/success', [PaymentController::class, 'success'])->name('payments.success');
 
-// Routes Médias
+    // Routes Médias
     Route::post('events/{event}/media', [MediaController::class, 'store'])->name('media.store');
     Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+
+    // Routes Commentaires
+    Route::post('comments', [\App\Http\Controllers\CommentController::class, 'store'])->name('comments.store');
+    Route::delete('comments/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('comments.destroy');
+
+    // Routes Notifications
+    Route::post('notifications/mark-all-read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back();
+    })->name('notifications.markAllAsRead');
 
 // Swagger API Documentation
 });

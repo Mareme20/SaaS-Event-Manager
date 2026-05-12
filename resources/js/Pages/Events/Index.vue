@@ -190,9 +190,12 @@ const formatDate = (date) => {
                             <div>
                                 <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Devise</label>
                                 <select v-model="form.currency" class="mt-1 block w-full bg-slate-50 border-0 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-fuchsia-500 transition">
-                                    <option value="FCFA">FCFA</option>
-                                    <option value="EUR">Euro (€)</option>
-                                    <option value="USD">Dollar ($)</option>
+                                    <option value="FCFA">FCFA (Franc CFA)</option>
+                                    <option value="EUR">EUR (Euro €)</option>
+                                    <option value="USD">USD (Dollar $)</option>
+                                    <option value="NGN">NGN (Naira ₦)</option>
+                                    <option value="GHS">GHS (Cedi ₵)</option>
+                                    <option value="GBP">GBP (Livre £)</option>
                                 </select>
                             </div>
                         </div>
