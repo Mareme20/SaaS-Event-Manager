@@ -1,5 +1,10 @@
 [build]
-builder = "NIXPACKS"
+builder = "DOCKER"
+dockerfilePath = "Dockerfile"
 
-[build.nixpacks]
-plan = { variables = { "RAILPACK_PHP_VERSION" = "8.3" } }
+[deploy]
+startCommand = "entrypoint.sh"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+maxRestartCount = 3
