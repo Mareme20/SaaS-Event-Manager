@@ -1,49 +1,8 @@
-# Stage 1: Composer (Backend Dependencies)
-FROM php:8.2-fpm-alpine AS composer-builder
-
-# Install system dependencies for Composer
-RUN apk add --no-cache \
-    zip \
-    libzip-dev \
-    unzip \
-    git \
-    oniguruma-dev \
-    curl
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-WORKDIR /app
-
-# Copy composer files
-COPY composer*.json ./
-
-# Install PHP dependencies
-# Note: --no-scripts is used here to avoid issues with missing files during the initial install
-RUN composer install --no-dev --no-scripts --no-autoloader
-
-# Copy the rest of the application
-COPY . .
-
-# Finish composer install with autoloader and scripts
-RUN composer install --no-dev --optimize-autoloader
-
-# Stage 2: Node.js (Frontend)
-FROM node:20-alpine AS frontend-builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-# Copy vendor from composer-builder for Ziggy
-COPY --from=composer-builder /app/vendor ./vendor
-RUN npm run build
-
-# Stage 3: PHP (Final)
-FROM php:8.2-fpm-alpine
+# Stage 1: Base PHP with extensions
+FROM php:8.2-fpm-alpine AS php-base
 
 # Install system dependencies
 RUN apk add --no-cache \
-    nginx \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
@@ -61,6 +20,40 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+# Stage 2: Composer (Backend Dependencies)
+FROM php-base AS composer-builder
+WORKDIR /app
+
+# Copy composer files - use explicit names to ensure lock file is included
+COPY composer.json composer.lock* ./
+
+# Install PHP dependencies
+RUN composer install --no-dev --no-scripts --no-autoloader
+
+# Copy the rest of the application
+COPY . .
+
+# Finish composer install with autoloader and scripts
+RUN composer install --no-dev --optimize-autoloader
+
+# Stage 3: Node.js (Frontend)
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+# Copy vendor from composer-builder for Ziggy
+COPY --from=composer-builder /app/vendor ./vendor
+RUN npm run build
+
+# Stage 4: PHP (Final)
+FROM php-base
+
+# Install Nginx
+RUN apk add --no-cache nginx
 
 WORKDIR /var/www/html
 
