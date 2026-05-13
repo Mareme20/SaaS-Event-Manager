@@ -7,8 +7,11 @@ set -eu
 # We replace the ${PORT} token before starting nginx.
 sed -i "s/\${PORT}/$PORT/g" /etc/nginx/http.d/default.conf
 
-# Ensure nginx picks up the new listen port (use our config file explicitly).
-nginx -t -c /etc/nginx/http.d/default.conf
+# Ensure nginx picks up the new listen port.
+# Note: /etc/nginx/http.d/default.conf is expected to be a full nginx config (not just a server block).
+# If Railway uses an http.d include template, keep validation simple.
+nginx -t
+
 
 
 # Start PHP-FPM first so /health can be served as soon as Nginx starts.
@@ -52,7 +55,8 @@ php artisan view:cache
 # Run migrations (after startup readiness)
 php artisan migrate --force
 
-# Keep nginx in foreground (the container entrypoint must not exit)
-# If nginx is already running in background, bring it to foreground by exec-ing.
-exec nginx -g "daemon off;"
+# Keep container alive (nginx is already running in background)
+# Wait on nginx process.
+wait
+
 
