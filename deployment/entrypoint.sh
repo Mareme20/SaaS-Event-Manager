@@ -15,7 +15,11 @@ echo "[entrypoint] nginx listen line:" >&2
 sed -n '1,200p' /etc/nginx/http.d/default.conf | grep -E "^\s*listen\b" -n >&2 || true
 
 echo "[entrypoint] nginx -t output:" >&2
-nginx -t 2>&1 >&2 || true
+nginx -t 2>&1 >&2 || {
+  echo "[entrypoint] nginx -t failed" >&2
+  exit 1
+}
+
 
 # Show whether nginx has already bound (useful if previous process still running)
 (if pgrep -x nginx >/dev/null 2>&1; then echo "[entrypoint] nginx already running" >&2; else echo "[entrypoint] nginx not running yet" >&2; fi)
