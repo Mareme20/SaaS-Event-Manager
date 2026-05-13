@@ -5,16 +5,23 @@ set -eu
 
 # Substitute Railway dynamic port into Nginx config template.
 # We replace the ${PORT} token before starting nginx.
+echo "[entrypoint] PORT=${PORT}" >&2
+
+# Substitute Railway dynamic port into Nginx config template.
+# (The file is copied from deployment/nginx.conf at build time.)
 sed -i "s/\${PORT}/$PORT/g" /etc/nginx/http.d/default.conf
 
-# Ensure nginx picks up the new listen port.
-# Note: /etc/nginx/http.d/default.conf is expected to be a full nginx config (not just a server block).
-# If Railway uses an http.d include template, keep validation simple.
-nginx -t
+echo "[entrypoint] nginx listen line:" >&2
+sed -n '1,200p' /etc/nginx/http.d/default.conf | grep -E "^\s*listen\b" -n >&2 || true
 
+echo "[entrypoint] nginx -t output:" >&2
+nginx -t 2>&1 >&2 || true
 
+# Show whether nginx has already bound (useful if previous process still running)
+(if pgrep -x nginx >/dev/null 2>&1; then echo "[entrypoint] nginx already running" >&2; else echo "[entrypoint] nginx not running yet" >&2; fi)
 
 # Start PHP-FPM first so /health can be served as soon as Nginx starts.
+
 # Force PHP-FPM to listen on the address nginx expects.
 # The nginx config uses: fastcgi_pass 127.0.0.1:9000;
 mkdir -p /usr/local/etc/php-fpm.d
