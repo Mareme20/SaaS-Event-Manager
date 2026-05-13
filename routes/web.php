@@ -24,6 +24,10 @@ use Inertia\Inertia;
 |
 */
 
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok']);
+});
+
 Route::get('/', function () {
     $events = App\Models\Event::with(['media', 'organizer'])->latest()->take(6)->get();
     
