@@ -1,4 +1,14 @@
 #!/bin/sh
+set -eu
+
+: "${PORT:?PORT is required (Railway dynamic port not set).}"
+
+# Substitute Railway dynamic port into Nginx config template.
+# We replace the ${PORT} token before starting nginx.
+sed -i "s/\${PORT}/$PORT/g" /etc/nginx/http.d/default.conf
+
+# Ensure nginx picks up the new listen port.
+nginx -t
 
 # Optimizations
 php artisan config:cache
@@ -13,3 +23,4 @@ php-fpm -D
 
 # Start Nginx in foreground
 nginx -g "daemon off;"
+
