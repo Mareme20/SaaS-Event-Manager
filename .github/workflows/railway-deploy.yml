@@ -1,0 +1,81 @@
+name: CI - Deploy to Railway
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Deploy on Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          echo "Deploying IMAGE=${IMAGE} to Railway project=${RAILWAY_PROJECT_ID}"
+
+          # Railway container deploy:
+          # - Updates the service's image to the one we built.
+          # - The exact endpoints can vary by Railway API version; this implementation matches
+          #   the common pattern used by Railway's API docs.
+          # If this endpoint does not match your Railway project setup, adjust it accordingly.
+
+          # 1) Get the project's first service id
+          SERVICES_JSON=$(curl -sS \
+            -H "Authorization: Bearer ${RAILWAY_TOKEN}" \
+            "https://api.railway.app/v2/compose/${RAILWAY_PROJECT_ID}/services")
+
+
+          SERVICE_ID=$(echo "$SERVICES_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['id'] if isinstance(d,list) and d and 'id' in d[0] else d.get('id') or '')")
+
+          if [ -z "$SERVICE_ID" ]; then
+            echo "Could not determine SERVICE_ID from response:" >&2
+            echo "$SERVICES_JSON" >&2
+            exit 1
+          fi
+
+          echo "Using SERVICE_ID=${SERVICE_ID}"
+
+          # 2) Trigger deploy by updating image
+          # Note: keep payload minimal; adjust if Railway requires different schema.
+          curl -sS -X PUT \
+            -H "Authorization: Bearer ${RAILWAY_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"image\":\"${IMAGE}\"}" \
+            "https://api.railway.app/v2/services/${SERVICE_ID}" 
+
+          echo "Deploy request sent."
+
