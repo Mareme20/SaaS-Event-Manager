@@ -57,15 +57,14 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# If Nginx failed to bind (e.g. PORT already in use), stop early.
-# IMPORTANT: on some environments nginx master may already exist, so rely on port listening.
-if ! (command -v ss >/dev/null 2>&1 && ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":${PORT}$" ); then
-  echo "Nginx failed to listen on :${PORT}. Checking listeners..." >&2
-  (command -v ss >/dev/null 2>&1 && ss -ltnp 2>/dev/null | grep ":${PORT}" >&2) || true
-  (command -v netstat >/dev/null 2>&1 && netstat -tulpn 2>/dev/null | grep ":${PORT}" >&2) || true
+# Vérification finale de la disponibilité du service HTTP
+if ! wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
+  echo "[entrypoint] Erreur fatale : Nginx ne répond pas sur la route /health après 30 secondes." >&2
+  kill "$NGINX_PID"
   exit 1
 fi
 
+echo "[entrypoint] Nginx et PHP-FPM sont opérationnels !" >&2
 
 
 # Optimizations (safe to do after the service is reachable)
@@ -79,7 +78,3 @@ php artisan migrate --force
 # Keep container alive.
 # Wait for nginx PID.
 wait "$NGINX_PID"
-
-
-
-
