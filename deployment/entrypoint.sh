@@ -58,13 +58,14 @@ for i in $(seq 1 30); do
 done
 
 # If Nginx failed to bind (e.g. PORT already in use), stop early.
-if ! pgrep -x nginx >/dev/null 2>&1; then
-  echo "Nginx failed to start (port bind likely). Checking listeners on :${PORT}..." >&2
-  (command -v ss >/dev/null 2>&1 && ss -ltnp | grep ":${PORT}" >&2) || true
+# IMPORTANT: on some environments nginx master may already exist, so rely on port listening.
+if ! (command -v ss >/dev/null 2>&1 && ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":${PORT}$" ); then
+  echo "Nginx failed to listen on :${PORT}. Checking listeners..." >&2
+  (command -v ss >/dev/null 2>&1 && ss -ltnp 2>/dev/null | grep ":${PORT}" >&2) || true
   (command -v netstat >/dev/null 2>&1 && netstat -tulpn 2>/dev/null | grep ":${PORT}" >&2) || true
-
   exit 1
 fi
+
 
 
 # Optimizations (safe to do after the service is reachable)
