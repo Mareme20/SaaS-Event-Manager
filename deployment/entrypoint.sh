@@ -36,8 +36,13 @@ php-fpm -t
 php-fpm -D
 
 # Start Nginx once, then wait until the app responds to /health.
-# This prevents starting multiple Nginx instances (which can cause "Address already in use").
+# IMPORTANT: start nginx as the main process (no extra wait), to avoid
+# double-process/port conflicts on Railway.
+
+nginx -t >/dev/null 2>&1 || true
+
 nginx -g "daemon off;" &
+NGINX_PID=$!
 
 for i in $(seq 1 30); do
   if wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
@@ -52,8 +57,6 @@ if ! pgrep -x nginx >/dev/null 2>&1; then
   exit 1
 fi
 
-
-
 # Optimizations (safe to do after the service is reachable)
 php artisan config:cache
 php artisan route:cache
@@ -62,8 +65,10 @@ php artisan view:cache
 # Run migrations (after startup readiness)
 php artisan migrate --force
 
-# Keep container alive (nginx is already running in background)
-# Wait on nginx process.
-wait
+# Keep container alive.
+# Wait for nginx PID.
+wait "$NGINX_PID"
+
+
 
 
