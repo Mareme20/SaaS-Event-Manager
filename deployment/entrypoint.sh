@@ -7,8 +7,9 @@ set -eu
 # We replace the ${PORT} token before starting nginx.
 sed -i "s/\${PORT}/$PORT/g" /etc/nginx/http.d/default.conf
 
-# Ensure nginx picks up the new listen port.
-nginx -t
+# Ensure nginx picks up the new listen port (use our config file explicitly).
+nginx -t -c /etc/nginx/http.d/default.conf
+
 
 # Start PHP-FPM first so /health can be served as soon as Nginx starts.
 # Force PHP-FPM to listen on the address nginx expects.
@@ -24,26 +25,24 @@ EOF
 php-fpm -t
 php-fpm -D
 
-# Wait until the HTTP server responds to /health
-# (Railway healthcheck runs against the container network).
-# We start Nginx right after PHP-FPM; this loop is a short buffer.
+# Start Nginx once, then wait until the app responds to /health.
+# This prevents starting multiple Nginx instances (which can cause "Address already in use").
+nginx -g "daemon off;" &
+
 for i in $(seq 1 30); do
-  # Start Nginx on first iteration (so Nginx becomes available for the healthcheck loop)
-  if ! pgrep -x nginx >/dev/null 2>&1; then
-    nginx -g "daemon off;" &
-  fi
-
-  # If nginx failed to start, don't loop forever
-  if [ "$i" -eq 30 ]; then
-    echo "Nginx did not start successfully" >&2
-    exit 1
-  fi
-
   if wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
+
+# If Nginx failed to bind (e.g. PORT already in use), stop early.
+if ! pgrep -x nginx >/dev/null 2>&1; then
+  echo "Nginx failed to start (port bind error likely)" >&2
+  exit 1
+fi
+
+
 
 # Optimizations (safe to do after the service is reachable)
 php artisan config:cache
