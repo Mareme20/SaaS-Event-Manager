@@ -67,6 +67,10 @@ fi
 echo "[entrypoint] Nginx et PHP-FPM sont opérationnels !" >&2
 
 
+# Nettoyer impérativement les anciens caches obsolètes pour forcer la lecture de l'environnement Railway
+php artisan config:clear
+php artisan route:clear
+
 # Optimizations (safe to do after the service is reachable)
 php artisan config:cache
 php artisan route:cache
