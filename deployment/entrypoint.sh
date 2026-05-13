@@ -43,10 +43,12 @@ php-fpm -D
 # IMPORTANT: start nginx as the main process (no extra wait), to avoid
 # double-process/port conflicts on Railway.
 
-nginx -t >/dev/null 2>&1 || true
-
+echo "[entrypoint] starting nginx..." >&2
+# Start nginx and capture its startup failure logs.
+# We do NOT silence output here so Railway logs show the real bind error.
 nginx -g "daemon off;" &
 NGINX_PID=$!
+
 
 for i in $(seq 1 30); do
   if wget -qO- "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
