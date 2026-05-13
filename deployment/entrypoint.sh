@@ -18,7 +18,18 @@ php artisan view:cache
 # Run migrations
 php artisan migrate --force
 
-# Start PHP-FPM in background
+# Force PHP-FPM to listen on the address nginx expects.
+# The nginx config uses: fastcgi_pass 127.0.0.1:9000;
+# On Alpine images the default listen address may differ, so we override it.
+mkdir -p /usr/local/etc/php-fpm.d
+cat > /usr/local/etc/php-fpm.d/zz-railway-listen.conf <<'EOF'
+[www]
+listen = 127.0.0.1:9000
+listen.allowed_clients = 127.0.0.1
+EOF
+
+# Validate php-fpm config and start PHP-FPM in background
+php-fpm -t
 php-fpm -D
 
 # Start Nginx in foreground
