@@ -71,13 +71,52 @@ echo "[entrypoint] Nginx et PHP-FPM sont opérationnels !" >&2
 php artisan config:clear
 php artisan route:clear
 
+# Wait for DB readiness BEFORE any Laravel DB interaction (migrations, cached config, etc.)
+# Prevents: SQLSTATE[HY000] [2002] Connection refused
+
+echo "[entrypoint] Checking database connectivity (PDO/mysql) ..." >&2
+
+# Give Railway DB time to be reachable (default 60s)
+DB_WAIT_SECONDS="${DB_WAIT_SECONDS:-60}"
+
+for i in $(seq 1 "$DB_WAIT_SECONDS"); do
+  php -r '
+    $host = getenv("DB_HOST") ?: "127.0.0.1";
+    $port = getenv("DB_PORT") ?: "3306";
+    $db   = getenv("DB_DATABASE") ?: "forge";
+    $user = getenv("DB_USERNAME") ?: "forge";
+    $pass = getenv("DB_PASSWORD") ?: "";
+
+    $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
+
+    $pdo = new PDO($dsn, $user, $pass, [PDO::ATTR_TIMEOUT => 2]);
+    $pdo->query("select 1");
+    exit(0);
+  ' >/dev/null 2>&1 && {
+    echo "[entrypoint] Database reachable." >&2
+    break
+  }
+
+  if [ "$i" -eq "$DB_WAIT_SECONDS" ]; then
+    echo "[entrypoint] Fatal: database not reachable after ${DB_WAIT_SECONDS}s." >&2
+    exit 1
+  fi
+
+  if [ "$((i % 5))" -eq 0 ]; then
+    echo "[entrypoint] waiting for DB... (${i}/${DB_WAIT_SECONDS})" >&2
+  fi
+
+  sleep 1
+done
+
 # Optimizations (safe to do after the service is reachable)
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run migrations (after startup readiness)
+# Run migrations (after DB readiness)
 php artisan migrate --force
+
 
 # Keep container alive.
 # Wait for nginx PID.
