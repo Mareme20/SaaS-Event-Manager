@@ -84,6 +84,7 @@ echo "[entrypoint] Checking database connectivity (PDO/mysql) ..." >&2
 
 # Give Railway DB time to be reachable (default 60s)
 DB_WAIT_SECONDS="${DB_WAIT_SECONDS:-60}"
+DB_CONNECTED=1
 
 for i in $(seq 1 "$DB_WAIT_SECONDS"); do
   php -r '
@@ -100,12 +101,13 @@ for i in $(seq 1 "$DB_WAIT_SECONDS"); do
     exit(0);
   ' >/dev/null 2>&1 && {
     echo "[entrypoint] Database reachable." >&2
+    DB_CONNECTED=0
     break
   }
 
   if [ "$i" -eq "$DB_WAIT_SECONDS" ]; then
-    echo "[entrypoint] Fatal: database not reachable after ${DB_WAIT_SECONDS}s." >&2
-    exit 1
+    echo "[entrypoint] ATTENTION : Base de données injoignable après ${DB_WAIT_SECONDS}s. Poursuite du démarrage..." >&2
+    break
   fi
 
   if [ "$((i % 5))" -eq 0 ]; then
@@ -120,8 +122,13 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run migrations (after DB readiness)
-php artisan migrate --force
+# Run migrations if database connection was successful
+if [ "$DB_CONNECTED" -eq 0 ]; then
+  echo "[entrypoint] Running database migrations..." >&2
+  php artisan migrate --force
+else
+  echo "[entrypoint] ATTENTION : Migrations ignorées car la base de données est injoignable." >&2
+fi
 
 # Keep container alive.
 # Wait for nginx PID.
