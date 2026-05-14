@@ -26,13 +26,19 @@ nginx -t 2>&1 >&2 || {
 
 # Start PHP-FPM first so /health can be served as soon as Nginx starts.
 
-# Force PHP-FPM to listen on the address nginx expects.
-# The nginx config uses: fastcgi_pass 127.0.0.1:9000;
+# Force PHP-FPM to listen on the address nginx expects with optimized settings for Railway memory.
 mkdir -p /usr/local/etc/php-fpm.d
 cat > /usr/local/etc/php-fpm.d/zz-railway-listen.conf <<'EOF'
 [www]
 listen = 127.0.0.1:9000
 listen.allowed_clients = 127.0.0.1
+pm = ondemand
+pm.max_children = 5
+pm.process_idle_timeout = 10s
+pm.max_requests = 200
+request_terminate_timeout = 60s
+php_admin_flag[log_errors] = on
+php_admin_value[error_log] = /proc/self/fd/2
 EOF
 
 # Validate php-fpm config and start PHP-FPM in background
@@ -116,7 +122,6 @@ php artisan view:cache
 
 # Run migrations (after DB readiness)
 php artisan migrate --force
-
 
 # Keep container alive.
 # Wait for nginx PID.
