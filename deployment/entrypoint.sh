@@ -80,7 +80,7 @@ php artisan route:clear
 # Wait for DB readiness BEFORE any Laravel DB interaction (migrations, cached config, etc.)
 # Prevents: SQLSTATE[HY000] [2002] Connection refused
 
-echo "[entrypoint] Checking database connectivity (PDO/mysql) ..." >&2
+echo "[entrypoint] Checking database connectivity (PDO/mysql) ... " >&2
 
 # Give Railway DB time to be reachable (default 60s)
 DB_WAIT_SECONDS="${DB_WAIT_SECONDS:-60}"
@@ -88,17 +88,36 @@ DB_CONNECTED=1
 
 for i in $(seq 1 "$DB_WAIT_SECONDS"); do
   php -r '
-    $host = getenv("DB_HOST") ?: "127.0.0.1";
-    $port = getenv("DB_PORT") ?: "3306";
-    $db   = getenv("DB_DATABASE") ?: "forge";
-    $user = getenv("DB_USERNAME") ?: "forge";
-    $pass = getenv("DB_PASSWORD") ?: "";
+    $url = getenv("DATABASE_URL") ?: getenv("MYSQL_URL");
+    if ($url) {
+        $parts = parse_url($url);
+        $host = $parts["host"] ?? "127.0.0.1";
+        $port = $parts["port"] ?? "3306";
+        $db   = ltrim($parts["path"] ?? "/forge", "/");
+        $user = $parts["user"] ?? "forge";
+        $pass = $parts["pass"] ?? "";
+    } else {
+        $host = getenv("DB_HOST") ?: getenv("MYSQLHOST") ?: "127.0.0.1";
+        $port = getenv("DB_PORT") ?: getenv("MYSQLPORT") ?: "3306";
+        $db   = getenv("DB_DATABASE") ?: getenv("MYSQLDATABASE") ?: "forge";
+        $user = getenv("DB_USERNAME") ?: getenv("MYSQLUSER") ?: "forge";
+        $pass = getenv("DB_PASSWORD") ?: getenv("MYSQLPASSWORD") ?: "";
+    }
 
     $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
 
-    $pdo = new PDO($dsn, $user, $pass, [PDO::ATTR_TIMEOUT => 2]);
-    $pdo->query("select 1");
-    exit(0);
+    try {
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_TIMEOUT => 2,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        ]);
+        $pdo->query("select 1");
+        exit(0);
+    } catch (PDOException $e) {
+        // Optionnel: log d erreurs plus verbeuses pour le debug Railway
+        // echo $e->getMessage();
+        exit(1);
+    }
   ' >/dev/null 2>&1 && {
     echo "[entrypoint] Database reachable." >&2
     DB_CONNECTED=0
