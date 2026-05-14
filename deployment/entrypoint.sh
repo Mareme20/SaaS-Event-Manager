@@ -82,8 +82,8 @@ php artisan route:clear
 
 echo "[entrypoint] Checking database connectivity (PDO/mysql) ... " >&2
 
-# Give Railway DB time to be reachable (default 60s)
-DB_WAIT_SECONDS="${DB_WAIT_SECONDS:-60}"
+# Force la verification rapide a 1 seconde pour eviter le blocage reseau de Railway
+DB_WAIT_SECONDS="1"
 DB_CONNECTED=1
 
 for i in $(seq 1 "$DB_WAIT_SECONDS"); do
@@ -114,8 +114,6 @@ for i in $(seq 1 "$DB_WAIT_SECONDS"); do
         $pdo->query("select 1");
         exit(0);
     } catch (PDOException $e) {
-        // Optionnel: log d erreurs plus verbeuses pour le debug Railway
-        // echo $e->getMessage();
         exit(1);
     }
   ' >/dev/null 2>&1 && {
@@ -125,12 +123,8 @@ for i in $(seq 1 "$DB_WAIT_SECONDS"); do
   }
 
   if [ "$i" -eq "$DB_WAIT_SECONDS" ]; then
-    echo "[entrypoint] ATTENTION : Base de données injoignable après ${DB_WAIT_SECONDS}s. Poursuite du démarrage..." >&2
+    echo "[entrypoint] ATTENTION : Base de données temporairement injoignable. Poursuite immédiate du démarrage..." >&2
     break
-  fi
-
-  if [ "$((i % 5))" -eq 0 ]; then
-    echo "[entrypoint] waiting for DB... (${i}/${DB_WAIT_SECONDS})" >&2
   fi
 
   sleep 1
@@ -141,13 +135,9 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Run migrations if database connection was successful
-if [ "$DB_CONNECTED" -eq 0 ]; then
-  echo "[entrypoint] Running database migrations..." >&2
-  php artisan migrate --force
-else
-  echo "[entrypoint] ATTENTION : Migrations ignorées car la base de données est injoignable." >&2
-fi
+# Execution forcee des migrations sans blocage applicatif
+echo "[entrypoint] Tentative d execution des migrations..." >&2
+php artisan migrate --force || echo "[entrypoint] ATTENTION : Les migrations ont ete reportees (DB indisponible)." >&2
 
 # Keep container alive.
 # Wait for nginx PID.
