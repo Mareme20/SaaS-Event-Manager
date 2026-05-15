@@ -1,6 +1,6 @@
 FROM php:8.2-cli-alpine
 
-ARG CACHEBUST=4
+ARG CACHEBUST=6
 
 RUN apk add --no-cache \
     git \
@@ -21,8 +21,13 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 RUN npm install && npm run build || true
 
-# Forcer les permissions totales sur le dossier de stockage de Laravel
-RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
+# Configuration stricte des permissions et redirection des logs Laravel vers la sortie standard
+RUN mkdir -p storage/logs && touch storage/logs/laravel.log && chmod -R 777 storage bootstrap/cache
 
 EXPOSE 8080
-CMD php artisan migrate --force && php -S 0.0.0.0:8080 -t public
+
+# Utilisation d'un script de démarrage qui nettoie, lance et surveille les erreurs de Laravel
+CMD php artisan config:clear && \
+    php artisan cache:clear && \
+    (tail -f storage/logs/laravel.log &) && \
+    php -S 0.0.0.0:8080 -t public
