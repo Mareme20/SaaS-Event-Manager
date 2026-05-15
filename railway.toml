@@ -2,6 +2,13 @@
 builder = "NIXPACKS"
 
 [phases.setup]
-nixPkgs = ["php81", "nginx", "nodejs_20", "php81Packages.composer"]
+nixPkgs = ["php81", "nginx", "libmysqlclient", "php81Packages.composer", "nodejs_20"]
 
+[phases.install]
+cmds = ["composer install --ignore-platform-reqs", "npm ci"]
 
+[phases.build]
+cmds = ["npm run build"]
+
+[deploy]
+startCommand = "node /assets/scripts/prestart.mjs /assets/nginx.template.conf /nginx.conf && (php-fpm -y /assets/php-fpm.conf & nginx -c /nginx.conf)"
