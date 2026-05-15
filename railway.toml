@@ -1,5 +1,5 @@
 [build]
 builder = "NIXPACKS"
 
-[setup]
-nixPkgs = ["php81", "nginx", "libmysqlclient", "php81Packages.composer", "nodejs_20", "npm"]
+[phases.setup]
+nixPkgs = ["php81", "nginx", "nodejs_20", "php81Packages.composer"]
