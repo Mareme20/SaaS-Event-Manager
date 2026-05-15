@@ -1,9 +1,8 @@
 [build]
-builder = "NIXPACKS"
+builder = "nixpacks"
 
-[build.env]
+[build.nixpacks]
+nodeVersion = "20"
 
-NIXPACKS_NO_CACHE = "1"
-
-
-    
+[deploy]
+startCommand = "php-fpm -y /assets/php-fpm.conf & nginx -c /nginx.conf"
