@@ -1,6 +1,6 @@
 FROM php:8.2-cli-alpine
 
-ARG CACHEBUST=1
+ARG CACHEBUST=2
 
 RUN apk add --no-cache \
     git \
@@ -23,6 +23,5 @@ RUN npm install && npm run build || true
 
 RUN chmod -R 775 storage bootstrap/cache
 
-EXPOSE 80
-# Correction ici : utilisation des doubles guillemets pour l'interprétation de la variable PORT
-CMD php -S 0.0.0.0:${PORT} -t public
+EXPOSE 8080
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
