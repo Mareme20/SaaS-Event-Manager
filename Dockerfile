@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-ARG CACHEBUST=17
+ARG CACHEBUST=19
 
 RUN apk add --no-cache \
     git \
@@ -22,9 +22,11 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 RUN npm ci && npm run build || true
 
-RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
+# Création du vrai dossier physique à la place du lien symbolique
+RUN rm -rf public/storage && mkdir -p public/storage storage/app/public
+RUN chmod -R 777 storage bootstrap/cache public/storage
 
-RUN echo ':{$PORT} {' > /etc/Caddyfile && \
+RUN echo ':{env.PORT} {' > /etc/Caddyfile && \
     echo '    root * /var/www/html/public' >> /etc/Caddyfile && \
     echo '    php_fastcgi 127.0.0.1:9000' >> /etc/Caddyfile && \
     echo '    file_server' >> /etc/Caddyfile && \
@@ -32,12 +34,11 @@ RUN echo ':{$PORT} {' > /etc/Caddyfile && \
 
 EXPOSE 8080
 
-# Ajout de php artisan storage:link pour rendre les images accessibles publiquement
+# Script en tâche de fond qui copie en continu les images reçues vers le dossier accessible par Caddy
 CMD cp -n .env.example .env || true && \
     php artisan key:generate --force && \
-    php artisan storage:link --force || true && \
     php artisan config:clear && \
     php artisan cache:clear && \
-    php artisan view:clear && \
     php artisan migrate --force && \
+    (while true; do cp -r storage/app/public/* public/storage/ 2>/dev/null || true; sleep 2; done &) && \
     php-fpm -D && caddy run --config /etc/Caddyfile --adapter caddyfile
