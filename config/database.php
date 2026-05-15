@@ -38,7 +38,7 @@ return [
     | choice installed on your machine before you begin development.
     |
     */
-    
+
 
     'connections' => [
 
@@ -54,7 +54,7 @@ return [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL') ?: env('MYSQL_URL'),
             'host' => env('MYSQLHOST' , env('DB_HOST', 'mysql')), 
-            'port' => env('MYSQLPORT', env('DB_PORT', '3306')),
+            'port' => env('MYSQLPORT', env('DB_PORT', '27947')),
             'database' => env('MYSQLDATABASE', env('DB_DATABASE', 'railway')),
             'username' => env('MYSQLUSER', env('DB_USERNAME', 'root')),
             'password' => env('MYSQLPASSWORD', env('DB_PASSWORD', '')),
