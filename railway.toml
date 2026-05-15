@@ -1,2 +1,6 @@
 [build]
 builder = "NIXPACKS"
+
+[setup]
+aptPkgs = ["libbrotli-dev"]
+nixPkgs = ["php81Extensions.bcmath", "php81Extensions.intl", "php81Extensions.gd"]
