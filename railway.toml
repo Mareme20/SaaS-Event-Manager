@@ -2,4 +2,4 @@
 builder = "NIXPACKS"
 
 [setup]
-nixPkgs = ["php81Extensions.bcmath", "php81Extensions.intl", "php81Extensions.gd", "nodejs_20"]
+nixPkgs = ["php81", "nginx", "libmysqlclient", "php81Packages.composer", "nodejs_20", "npm"]
