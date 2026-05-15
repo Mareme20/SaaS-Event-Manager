@@ -1,6 +1,6 @@
 FROM php:8.2-cli-alpine
 
-ARG CACHEBUST=7
+ARG CACHEBUST=8
 
 RUN apk add --no-cache \
     git \
@@ -25,8 +25,10 @@ RUN mkdir -p storage/logs && touch storage/logs/laravel.log && chmod -R 777 stor
 
 EXPOSE 8080
 
-# Génération automatique de l'APP_KEY si manquante, nettoyage des caches, migrations puis démarrage
-CMD php artisan key:generate --force && \
+# 1. Création du fichier .env à partir du fichier d'exemple si absent
+# 2. Génération de la clé, nettoyage, migration et démarrage du serveur de développement
+CMD cp -n .env.example .env || true && \
+    php artisan key:generate --force && \
     php artisan config:clear && \
     php artisan cache:clear && \
     php artisan migrate --force && \
