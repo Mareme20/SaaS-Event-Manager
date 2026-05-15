@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-ARG CACHEBUST=16
+ARG CACHEBUST=17
 
 RUN apk add --no-cache \
     git \
@@ -24,7 +24,6 @@ RUN npm ci && npm run build || true
 
 RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
 
-# Correction stricte de la syntaxe de la variable pour Caddy : {$PORT}
 RUN echo ':{$PORT} {' > /etc/Caddyfile && \
     echo '    root * /var/www/html/public' >> /etc/Caddyfile && \
     echo '    php_fastcgi 127.0.0.1:9000' >> /etc/Caddyfile && \
@@ -33,11 +32,12 @@ RUN echo ':{$PORT} {' > /etc/Caddyfile && \
 
 EXPOSE 8080
 
+# Ajout de php artisan storage:link pour rendre les images accessibles publiquement
 CMD cp -n .env.example .env || true && \
     php artisan key:generate --force && \
-    php artisan vendor:publish --tag=cashier-migrations --force || true && \
-    php artisan vendor:publish --provider="Laravel\Cashier\CashierServiceProvider" --tag="cashier-migrations" --force || true && \
+    php artisan storage:link --force || true && \
     php artisan config:clear && \
     php artisan cache:clear && \
+    php artisan view:clear && \
     php artisan migrate --force && \
     php-fpm -D && caddy run --config /etc/Caddyfile --adapter caddyfile
