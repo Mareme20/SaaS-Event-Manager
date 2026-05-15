@@ -39,7 +39,6 @@ return [
     |
     */
 
-
     'connections' => [
 
         'sqlite' => [
@@ -50,14 +49,13 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
-                'mysql' => [
+        'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DATABASE_URL') ?: env('MYSQL_URL'),
-            'host' => env('MYSQLHOST' , env('DB_HOST', 'mysql')), 
-            'port' => env('MYSQLPORT', env('DB_PORT', '27947')),
-            'database' => env('MYSQLDATABASE', env('DB_DATABASE', 'railway')),
-            'username' => env('MYSQLUSER', env('DB_USERNAME', 'root')),
-            'password' => env('MYSQLPASSWORD', env('DB_PASSWORD', '')),
+            'host' => env('MYSQLHOST', 'yamabiko.proxy.rlwy.net'), 
+            'port' => env('MYSQLPORT', '27947'),
+            'database' => env('MYSQLDATABASE', 'railway'),
+            'username' => env('MYSQLUSER', 'root'),
+            'password' => env('MYSQLPASSWORD', 'antrzMzmqCiJzDcWIJQssyvUmmlgddXb'),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
@@ -69,7 +67,6 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-
 
         'pgsql' => [
             'driver' => 'pgsql',
