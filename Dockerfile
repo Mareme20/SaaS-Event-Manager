@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-ARG CACHEBUST=15
+ARG CACHEBUST=16
 
 RUN apk add --no-cache \
     git \
@@ -24,7 +24,8 @@ RUN npm ci && npm run build || true
 
 RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
 
-RUN echo ':{env.PORT} {' > /etc/Caddyfile && \
+# Correction stricte de la syntaxe de la variable pour Caddy : {$PORT}
+RUN echo ':{$PORT} {' > /etc/Caddyfile && \
     echo '    root * /var/www/html/public' >> /etc/Caddyfile && \
     echo '    php_fastcgi 127.0.0.1:9000' >> /etc/Caddyfile && \
     echo '    file_server' >> /etc/Caddyfile && \
@@ -32,7 +33,6 @@ RUN echo ':{env.PORT} {' > /etc/Caddyfile && \
 
 EXPOSE 8080
 
-# Ajout de l'instruction de publication des migrations de packages tiers (vendor)
 CMD cp -n .env.example .env || true && \
     php artisan key:generate --force && \
     php artisan vendor:publish --tag=cashier-migrations --force || true && \
