@@ -1,2 +1,5 @@
 [build]
 builder = "NIXPACKS"
+
+[build.env]
+NIXPACKS_NO_CACHE = "1"
