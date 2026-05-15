@@ -1,5 +1,9 @@
 [build]
-builder = "nixpacks"
+builder = "NIXPACKS"
 
-[build.nixpacks]
-nodeVersion = "20"
+[build.env]
+
+NIXPACKS_NO_CACHE = "1"
+
+
+    
