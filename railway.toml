@@ -3,3 +3,5 @@ builder = "NIXPACKS"
 
 [phases.setup]
 nixPkgs = ["php81", "nginx", "nodejs_20", "php81Packages.composer"]
+
+
