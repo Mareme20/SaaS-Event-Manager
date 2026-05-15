@@ -1,8 +1,7 @@
 FROM php:8.2-fpm-alpine
 
-ARG CACHEBUST=12
+ARG CACHEBUST=13
 
-# 1. Installation des extensions PHP requises et de Caddy
 RUN apk add --no-cache \
     git \
     unzip \
@@ -25,8 +24,8 @@ RUN npm ci && npm run build || true
 
 RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
 
-# 2. Configuration instantanée de Caddy pour Laravel
-RUN echo ':$PORT {' > /etc/Caddyfile && \
+# Utilisation de la syntaxe native de Caddy {env.PORT}
+RUN echo ':{env.PORT} {' > /etc/Caddyfile && \
     echo '    root * /var/www/html/public' >> /etc/Caddyfile && \
     echo '    php_fastcgi 127.0.0.1:9000' >> /etc/Caddyfile && \
     echo '    file_server' >> /etc/Caddyfile && \
@@ -34,7 +33,6 @@ RUN echo ':$PORT {' > /etc/Caddyfile && \
 
 EXPOSE 8080
 
-# 3. Démarrage de PHP-FPM en tâche de fond + Serveur Caddy
 CMD cp -n .env.example .env || true && \
     php artisan key:generate --force && \
     php artisan config:clear && \
