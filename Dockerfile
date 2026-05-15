@@ -1,6 +1,6 @@
 FROM php:8.2-cli-alpine
 
-ARG CACHEBUST=8
+ARG CACHEBUST=9
 
 RUN apk add --no-cache \
     git \
@@ -25,11 +25,12 @@ RUN mkdir -p storage/logs && touch storage/logs/laravel.log && chmod -R 777 stor
 
 EXPOSE 8080
 
-# 1. Création du fichier .env à partir du fichier d'exemple si absent
-# 2. Génération de la clé, nettoyage, migration et démarrage du serveur de développement
+# Ajout du routeur public de Laravel (public/index.php) pour éviter la page blanche
 CMD cp -n .env.example .env || true && \
     php artisan key:generate --force && \
+    php artisan view:clear && \
+    php artisan route:clear && \
     php artisan config:clear && \
     php artisan cache:clear && \
     php artisan migrate --force && \
-    php -S 0.0.0.0:8080 -t public
+    php -S 0.0.0.0:8080 -t public public/index.php
