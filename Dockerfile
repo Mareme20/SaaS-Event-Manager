@@ -1,6 +1,6 @@
 FROM php:8.2-cli-alpine
 
-ARG CACHEBUST=3
+ARG CACHEBUST=4
 
 RUN apk add --no-cache \
     git \
@@ -21,8 +21,8 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 RUN npm install && npm run build || true
 
-RUN chmod -R 775 storage bootstrap/cache
+# Forcer les permissions totales sur le dossier de stockage de Laravel
+RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
 
 EXPOSE 8080
-# Lancement des migrations suivi du démarrage du serveur
 CMD php artisan migrate --force && php -S 0.0.0.0:8080 -t public
