@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-ARG CACHEBUST=13
+ARG CACHEBUST=14
 
 RUN apk add --no-cache \
     git \
@@ -24,8 +24,8 @@ RUN npm ci && npm run build || true
 
 RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
 
-# Utilisation de la syntaxe native de Caddy {env.PORT}
-RUN echo ':{env.PORT} {' > /etc/Caddyfile && \
+# Utilisation du format valide {$PORT} de Caddy
+RUN echo ':{$PORT} {' > /etc/Caddyfile && \
     echo '    root * /var/www/html/public' >> /etc/Caddyfile && \
     echo '    php_fastcgi 127.0.0.1:9000' >> /etc/Caddyfile && \
     echo '    file_server' >> /etc/Caddyfile && \
