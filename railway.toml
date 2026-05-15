@@ -1,8 +1,5 @@
 [build]
-builder = "nixpacks"
-
-[build.nixpacks]
-nodeVersion = "20"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "php-fpm -y /assets/php-fpm.conf & nginx -c /nginx.conf"
+startCommand = "php -S 0.0.0.0:$PORT"
