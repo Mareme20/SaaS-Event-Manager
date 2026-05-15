@@ -1,11 +1,14 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 const props = defineProps({
     canLogin: Boolean,
     canRegister: Boolean,
     events: Object,
 });
+
+const mobileMenuOpen = ref(false);
 
 const formatDate = (date) => {
     if (!date) return '';
@@ -16,6 +19,7 @@ const formatDate = (date) => {
     });
 };
 </script>
+
 
 <template>
     <Head title="Catalogue des Événements" />
@@ -31,8 +35,9 @@ const formatDate = (date) => {
                     </div>
                     <span class="text-xl font-black text-slate-800 tracking-tighter">FESTI<span class="text-fuchsia-600">VAULT</span></span>
                 </div>
-                
-                <div class="flex items-center space-x-6">
+
+                <!-- Desktop links -->
+                <div class="hidden md:flex items-center space-x-6">
                     <Link :href="route('pricing')" class="text-sm font-bold text-slate-600 hover:text-fuchsia-700 transition">
                         Tarification
                     </Link>
@@ -50,8 +55,85 @@ const formatDate = (date) => {
                         </template>
                     </div>
                 </div>
+
+                <!-- Mobile burger -->
+                <div class="md:hidden flex items-center gap-3">
+                    <Link v-if="!$page.props.auth.user" :href="route('login')" class="text-sm font-bold text-slate-700 bg-white/70 backdrop-blur-sm px-4 py-2.5 rounded-full border border-amber-200/50 shadow-sm hover:bg-white transition">
+                        Connexion
+                    </Link>
+                    <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="text-sm font-bold text-slate-700 bg-white/70 backdrop-blur-sm px-4 py-2.5 rounded-full border border-amber-200/50 shadow-sm hover:bg-white transition">
+                        Tableau de bord
+                    </Link>
+
+                    <button
+                        type="button"
+                        class="p-2.5 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/50 shadow-sm hover:bg-white transition"
+                        @click="mobileMenuOpen = true"
+                        aria-label="Ouvrir le menu"
+                    >
+                        <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                </div>
             </div>
         </nav>
+
+        <!-- Mobile menu overlay -->
+        <div v-if="mobileMenuOpen" class="fixed inset-0 z-50 md:hidden" aria-modal="true" role="dialog">
+            <div class="absolute inset-0 bg-slate-900/40" @click="mobileMenuOpen = false"></div>
+            <div class="absolute top-0 right-0 left-0 p-4">
+                <div class="bg-white rounded-3xl shadow-2xl border border-amber-100 overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-amber-100 bg-cream/70">
+                        <span class="text-sm font-black text-slate-800">Menu</span>
+                        <button
+                            type="button"
+                            class="p-2.5 rounded-xl hover:bg-amber-50 transition"
+                            @click="mobileMenuOpen = false"
+                            aria-label="Fermer"
+                        >
+                            <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="p-4 space-y-3">
+                        <Link
+                            :href="route('pricing')"
+                            class="block text-sm font-bold text-slate-700 bg-amber-50 px-4 py-3 rounded-2xl border border-amber-100 hover:bg-amber-100 transition"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Tarification
+                        </Link>
+
+                        <template v-if="$page.props.auth.user">
+                            <Link
+                                :href="route('dashboard')"
+                                class="block text-sm font-bold text-slate-700 bg-white px-4 py-3 rounded-2xl border border-slate-100 hover:bg-slate-50 transition"
+                                @click="mobileMenuOpen = false"
+                            >
+                                Tableau de bord
+                            </Link>
+                        </template>
+
+                        <template v-else>
+                            <Link
+                                :href="route('login')"
+                                class="block text-sm font-bold text-slate-700 bg-white px-4 py-3 rounded-2xl border border-slate-100 hover:bg-slate-50 transition"
+                                @click="mobileMenuOpen = false"
+                            >
+                                Connexion
+                            </Link>
+                            <Link
+                                :href="route('register')"
+                                class="block text-sm font-bold text-white bg-gradient-to-r from-fuchsia-600 to-amber-500 px-4 py-3 rounded-2xl hover:from-fuchsia-700 hover:to-amber-600 transition"
+                                @click="mobileMenuOpen = false"
+                            >
+                                Créer un compte
+                            </Link>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Hero Section : Confettis & Or -->
         <header class="py-28 relative overflow-hidden bg-gradient-to-br from-amber-50 via-fuchsia-50/30 to-orange-50">

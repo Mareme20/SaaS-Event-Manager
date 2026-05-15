@@ -5,6 +5,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 
 const isDark = ref(false);
+const mobileMenuOpen = ref(false);
 
 const toggleDarkMode = () => {
     isDark.value = !isDark.value;
@@ -42,8 +43,8 @@ onMounted(() => {
                             </div>
                             <span class="text-xl font-black text-slate-800 dark:text-white tracking-tighter">FESTI<span class="text-fuchsia-600">VAULT</span></span>
                         </div>
-                        
-                        <!-- Navigation principale -->
+
+                        <!-- Desktop navigation -->
                         <div class="hidden md:flex md:ml-10 space-x-1">
                             <Link :href="route('dashboard')" :class="route().current('dashboard') ? 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400' : 'text-slate-500 dark:text-slate-400 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 hover:bg-slate-50 dark:hover:bg-slate-800'" class="px-4 py-2 rounded-xl text-sm font-bold transition">
                                 Tableau de bord
@@ -63,8 +64,21 @@ onMounted(() => {
                         </div>
                     </div>
 
+                    <!-- Mobile burger -->
+                    <div class="md:hidden">
+                        <button
+                            type="button"
+                            class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition shadow-sm"
+                            @click="mobileMenuOpen = true"
+                            aria-label="Ouvrir le menu"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                    </div>
+
                     <!-- Dropdown Utilisateur & Notifications & Dark Mode -->
                     <div class="flex items-center gap-2 md:gap-4">
+
                         <!-- Notifications -->
                         <Dropdown align="right" width="80">
                             <template #trigger>
@@ -125,12 +139,71 @@ onMounted(() => {
             </div>
         </nav>
 
+        <!-- Mobile menu overlay -->
+        <div v-if="mobileMenuOpen" class="fixed inset-0 z-50 md:hidden" aria-modal="true" role="dialog">
+            <div class="absolute inset-0 bg-slate-900/40" @click="mobileMenuOpen = false"></div>
+            <div class="absolute top-0 right-0 left-0 p-4">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-amber-100 dark:border-slate-800 overflow-hidden">
+                    <div class="flex items-center justify-between p-4 border-b border-amber-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                        <span class="text-sm font-black text-slate-800 dark:text-white">Menu</span>
+                        <button
+                            type="button"
+                            class="p-2.5 rounded-xl hover:bg-amber-50 dark:hover:bg-slate-800 transition"
+                            @click="mobileMenuOpen = false"
+                            aria-label="Fermer"
+                        >
+                            <svg class="w-5 h-5 text-slate-700 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <div class="p-4 space-y-2">
+                        <Link
+                            :href="route('dashboard')"
+                            class="block px-4 py-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-amber-50/80 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 transition"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Tableau de bord
+                        </Link>
+                        <Link
+                            :href="route('events.index')"
+                            class="block px-4 py-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Événements
+                        </Link>
+                        <Link
+                            :href="route('members.index')"
+                            class="block px-4 py-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Membres
+                        </Link>
+                        <Link
+                            :href="route('welcome')"
+                            class="block px-4 py-3 rounded-2xl text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Catalogue
+                        </Link>
+                        <Link
+                            :href="route('pricing')"
+                            class="block px-4 py-3 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-fuchsia-600 to-amber-500 hover:from-fuchsia-700 hover:to-amber-600 transition"
+                            @click="mobileMenuOpen = false"
+                        >
+                            Tarification
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- En-tête de la page -->
         <header v-if="$slots.header" class="bg-white dark:bg-slate-900 border-b border-amber-50/50 dark:border-slate-800 shadow-sm transition-colors duration-300">
             <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <slot name="header" />
             </div>
         </header>
+
 
         <!-- Contenu Principal -->
         <main class="py-8">

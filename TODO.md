@@ -1,10 +1,23 @@
-# TODO
+# TODO - Mobile navigation fixes
 
-## DB readiness fix (Railway)
-- [ ] Inspect current startup/migration flow (entrypoint) and confirm DB env assumptions
-- [ ] Add DB connectivity wait loop in `deployment/entrypoint.sh` (using `php artisan tinker` or mysql ping via PHP/PDO)
-- [ ] Ensure app uses correct Railway DB host (prefer `DATABASE_URL` / env mapping)
-- [ ] Run `php artisan migrate --force` only after DB is reachable
-- [ ] Rebuild + redeploy on Railway
-- [ ] Verify logs: no more `SQLSTATE[HY000] [2002] Connection refused`
+## Étape 1 : Plan confirmé
+- [x] Analyser les layouts et pages concernées
+- [x] Valider le plan de correction avec le user (burger + drawer avant/après connexion)
+
+## Étape 2 : Implémenter le menu mobile sur le catalogue (Welcome)
+- [ ] Ajouter un bouton burger sur mobile
+- [ ] Ajouter un drawer/overlay avec les liens (Tarification, Connexion, Créer un compte, Tableau de bord si auth)
+- [ ] Gérer la fermeture (clic overlay + clic lien)
+
+## Étape 3 : Implémenter le menu mobile sur le layout connecté (AuthenticatedLayout)
+- [x] Ajouter un bouton burger sur mobile
+- [x] Ajouter un drawer/overlay avec les liens principaux
+- [x] S’assurer que le drawer est visible et au bon z-index
+- [x] Gérer la fermeture au clic lien
+
+## Étape 4 : Rebuild & test
+- [ ] Lancer `npm run build` ou `npm run dev` (selon le workflow habituel)
+- [ ] Tester sur mobile : Welcome (avant connexion) + navigation après connexion
+- [ ] Corriger styles responsives si nécessaire
+
 
