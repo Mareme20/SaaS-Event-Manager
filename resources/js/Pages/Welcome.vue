@@ -194,8 +194,9 @@ const formatDate = (date) => {
                         <!-- Fond décoratif si pas d'image -->
                         <div class="absolute inset-0 bg-gradient-to-br from-fuchsia-500 via-purple-500 to-amber-400 opacity-90 group-hover:opacity-100 transition duration-700"></div>
                         
-                        <img v-if="event.media && event.media.length > 0" 
+<img v-if="event.media && event.media.length > 0" 
                              :src="event.media[0].file_url" 
+                             :alt="event.media[0].title" 
                              class="relative w-full h-full object-cover z-10 group-hover:scale-110 transition-transform duration-700">
                         
                         <!-- Élément festif si pas d'image -->

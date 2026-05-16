@@ -73,7 +73,7 @@ const downloadMedia = (url, name) => {
                     <!-- Overlay festif au survol -->
                     <div class="absolute inset-0 bg-gradient-to-t from-fuchsia-900/40 via-transparent to-amber-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none"></div>
 
-                    <img v-if="media.file_type === 'image'" :src="media.file_url" 
+                    <img v-if="media.file_type === 'image'" :src="media.file_url" :alt="media.title" 
                          @click="selectedMedia = media"
                          class="w-full h-auto cursor-zoom-in group-hover:scale-105 transition-transform duration-700 ease-out">
                     
@@ -138,6 +138,7 @@ const downloadMedia = (url, name) => {
             <div class="relative max-w-7xl w-full h-full flex items-center justify-center">
                 <img v-if="selectedMedia.file_type === 'image'" 
                      :src="selectedMedia.file_url" 
+                     :alt="selectedMedia.title" 
                      class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl shadow-fuchsia-900/20 border border-white/5 object-contain">
                 
                 <video v-else :src="selectedMedia.file_url" controls autoplay 

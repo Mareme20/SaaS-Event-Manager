@@ -40,8 +40,19 @@ class Media extends Model
      */
     public function getFileUrlAttribute()
     {
-        return asset(Storage::url($this->file_path));
+        // Si c'est déjà une URL complète (Cloudinary ou externe)
+        if (is_string($this->file_path) && preg_match('/^https?:\/\//i', $this->file_path)) {
+            // Si c'est Cloudinary, on peut ajouter des optimisations automatiques
+            if (str_contains($this->file_path, 'cloudinary.com')) {
+                return str_replace('/upload/', '/upload/f_auto,q_auto/', $this->file_path);
+            }
+            return $this->file_path;
+        }
+
+        // Sinon on utilise le disque public
+        return Storage::disk('public')->url($this->file_path);
     }
+
 
     /**
      * Define the append for serialization.

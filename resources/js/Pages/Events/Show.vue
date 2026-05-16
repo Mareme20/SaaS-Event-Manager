@@ -9,6 +9,7 @@ const props = defineProps({
 
 const showMediaModal = ref(false);
 const showQRModal = ref(false);
+const selectedMedia = ref(null);
 const filePreviews = ref([]);
 
 const formatCurrency = (value) => {
@@ -250,11 +251,12 @@ const copyPublicLink = () => {
                             </div>
                             <div v-if="event.data.media.length > 0" class="grid grid-cols-2 gap-4">
                                 <div v-for="media in event.data.media" :key="media.id" 
-                                     class="relative group aspect-square rounded-[1.5rem] overflow-hidden bg-slate-100 border-2 border-white shadow-md transition-all duration-500 hover:scale-105 hover:shadow-xl hover:border-fuchsia-200">
-                                    <img v-if="media.file_type === 'image'" :src="media.file_url" class="object-cover w-full h-full">
+                                     @click="selectedMedia = media"
+                                     class="relative group aspect-square rounded-[1.5rem] overflow-hidden bg-slate-100 border-2 border-white shadow-md transition-all duration-500 hover:scale-105 hover:shadow-xl hover:border-fuchsia-200 cursor-pointer">
+                                    <img v-if="media.file_type === 'image'" :src="media.file_url" :alt="media.title" class="object-cover w-full h-full">
                                     <video v-else :src="media.file_url" class="object-cover w-full h-full" muted></video>
                                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <button @click="deleteMedia(media.id)" 
+                                        <button @click.stop="deleteMedia(media.id)" 
                                                 class="p-2.5 bg-rose-500 text-white rounded-full hover:scale-110 shadow-lg transition-transform">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                         </button>
@@ -315,6 +317,27 @@ const copyPublicLink = () => {
                         📤 Publier
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Lightbox -->
+        <div v-if="selectedMedia" 
+             class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8"
+             @click.self="selectedMedia = null">
+            
+            <button @click="selectedMedia = null" 
+                    class="absolute top-6 right-6 z-10 p-3 bg-white/10 backdrop-blur-md rounded-full text-white/70 hover:text-white hover:bg-fuchsia-600 transition-all border border-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <div class="relative max-w-7xl w-full h-full flex items-center justify-center">
+                <img v-if="selectedMedia.file_type === 'image'" 
+                     :src="selectedMedia.file_url" 
+                     :alt="selectedMedia.title" 
+                     class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl border border-white/10 object-contain">
+                
+                <video v-else :src="selectedMedia.file_url" controls autoplay 
+                       class="max-w-full max-h-[85vh] rounded-2xl shadow-2xl border border-white/10"></video>
             </div>
         </div>
     </AuthenticatedLayout>
