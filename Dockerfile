@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-ARG CACHEBUST=20
+ARG CACHEBUST=21
 
 RUN apk add --no-cache \
     git \
@@ -24,10 +24,12 @@ RUN npm ci && npm run build || true
 
 RUN mkdir -p storage/logs && chmod -R 777 storage bootstrap/cache
 
-# Syntaxe de port valide obligatoirement avec un symbole dollar : {$PORT}
+# Configuration de Caddy pour forcer la transmission du protocole HTTPS à PHP-FPM
 RUN echo ':{$PORT} {' > /etc/Caddyfile && \
     echo '    root * /var/www/html/public' >> /etc/Caddyfile && \
-    echo '    php_fastcgi 127.0.0.1:9000' >> /etc/Caddyfile && \
+    echo '    php_fastcgi 127.0.0.1:9000 {' >> /etc/Caddyfile && \
+    echo '        env HTTPS on' >> /etc/Caddyfile && \
+    echo '    }' >> /etc/Caddyfile && \
     echo '    file_server' >> /etc/Caddyfile && \
     echo '}' >> /etc/Caddyfile
 
